@@ -12,7 +12,8 @@ router.post("/login", authController.login); // Login route to authenticate user
 router.post("/sendEmail", newsController.sendEmail); // Login route to authenticate users
 // Public route
 router.route("/search/:search").get(newsController.getSearchItems);
-router.route("/categories").get(newsController.getAllCategories);
+router.route("/categoriesNews").get(newsController.getFormatedCategories);
+router.route("/ALLcategories").get(newsController.getAllCategories);
 // Protected routes
 router
   .route("/")
@@ -21,7 +22,11 @@ router
 router
   .route("/:id")
   .get(newsController.getItemById)
-  .patch(authenticateToken, newsController.updateItemById)
+  .patch(
+    authenticateToken,
+    newsController.uploadMedia,
+    newsController.updateItemById
+  )
   .delete(authenticateToken, newsController.deleteItemById);
 
 module.exports = router;

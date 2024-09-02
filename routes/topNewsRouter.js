@@ -13,7 +13,11 @@ router
 
 router
   .route("/:id")
-  .patch(authenticateToken, topNewsController.updateTopNews)
+  .patch(
+    authenticateToken,
+    topNewsController.uploadMedia,
+    topNewsController.updateTopNews
+  )
   .delete(authenticateToken, topNewsController.deleteTopNews);
 
 module.exports = router;

@@ -7,6 +7,8 @@ const apiFeatures = require("../utils/apiFeatures");
 const NewsCard = require("../modules/news");
 
 const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const nodemailer = require("nodemailer");
 // const imageError = () => {
@@ -94,8 +96,16 @@ const uploadMedia = upload.fields([
 // Controller function to get all categories
 
 //=----
-
 const getAllCategories = async (req, res) => {
+  try {
+    // Fetch all categories from the database
+    const categories = await NewsCard.distinct("category"); // Assuming 'category' is the field name for categories
+    res.json(categories);
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+};
+const getFormatedCategories = async (req, res) => {
   try {
     // Aggregate news items by category
     const categories = await NewsCard.aggregate([
@@ -109,7 +119,7 @@ const getAllCategories = async (req, res) => {
         $project: {
           _id: 0,
           category: "$_id", // Rename _id to category
-          news: 1, // Include the news items
+          news: { $slice: ["$news", 5] }, // Limit the 'news' array to the first 5 items
         },
       },
     ]);
@@ -183,12 +193,16 @@ const postItem = async (req, res) => {
 };
 
 // Controller function to handle fetching a single item by ID
+
 const getItemById = async (req, res) => {
   try {
-    const itemId = await NewsCard.findById(req.params.id);
-    // Replace with actual logic to fetch item by ID
-    // const item = await Item.findById(itemId);
-    res.status(200).json({ message: `Fetching item with id ${itemId}` });
+    const item = await NewsCard.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+    res
+      .status(200)
+      .json({ message: `Fetching item with id ${req.params.id}`, item });
   } catch (err) {
     res.status(500).json({
       status: "failure",
@@ -199,26 +213,90 @@ const getItemById = async (req, res) => {
 };
 
 // Controller function to handle updating an item by ID
+
 const updateItemById = async (req, res) => {
   try {
+    // Extract the item ID from request parameters
     const itemId = req.params.id;
+
+    // Find the current item to get the old photo and video filenames
+    const currentItem = await NewsCard.findById(itemId);
+    if (!currentItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    // Extract and handle the update data
     const updatedItemData = req.body;
 
-    // Find the item by ID and update it
+    // Handle file uploads if they exist
+    if (req.files) {
+      const newPhotoFilename = req.files.photo
+        ? req.files.photo[0].originalname
+        : undefined;
+      const newVideoFilename = req.files.video
+        ? req.files.video[0].originalname
+        : undefined;
+
+      // Handle new photo upload
+      if (newPhotoFilename) {
+        // Delete the old photo if it exists
+        const oldPhotoFilename = currentItem.photo;
+        if (oldPhotoFilename) {
+          const oldPhotoPath = path.join(
+            __dirname,
+            "..",
+            "public",
+            "img",
+            "news",
+            oldPhotoFilename
+          );
+          if (fs.existsSync(oldPhotoPath)) {
+            fs.unlinkSync(oldPhotoPath);
+          }
+        }
+        // Add the new photo filename to the update data
+        updatedItemData.photo = newPhotoFilename;
+      }
+
+      // Handle new video upload
+      if (newVideoFilename) {
+        // Delete the old video if it exists
+        const oldVideoFilename = currentItem.video;
+        if (oldVideoFilename) {
+          const oldVideoPath = path.join(
+            __dirname,
+            "..",
+            "public",
+            "video",
+            oldVideoFilename
+          );
+          if (fs.existsSync(oldVideoPath)) {
+            fs.unlinkSync(oldVideoPath);
+          }
+        }
+        // Add the new video filename to the update data
+        updatedItemData.video = newVideoFilename;
+      }
+    }
+
+    // Update the item in the database
     const updatedItem = await NewsCard.findByIdAndUpdate(
       itemId,
       updatedItemData,
-      {
-        new: true,
-      }
+      { new: true, runValidators: true }
     );
 
-    // Replace with actual logic to update item
-    // const item = await Item.findByIdAndUpdate(itemId, updatedItem, { new: true });
-    res
-      .status(200)
-      .json({ message: `Item with id ${itemId} updated`, item: updatedItem });
+    if (!updatedItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    // Respond with the updated item
+    res.status(200).json({
+      message: `Item with id ${itemId} updated`,
+      item: updatedItem,
+    });
   } catch (err) {
+    // Handle any errors
     res.status(500).json({
       status: "failure",
       message: "Error updating item",
@@ -226,7 +304,6 @@ const updateItemById = async (req, res) => {
     });
   }
 };
-
 // Controller function to handle deleting an item by ID
 const deleteItemById = async (req, res) => {
   try {
@@ -279,8 +356,8 @@ const transporter = nodemailer.createTransport({
   service: "gmail", // You can use other services like 'smtp', 'mailgun', etc.
   host: "smtp.gmail.com", // The host
   auth: {
-    user: "rinas1122k@gmail.com", // Your email address
-    pass: "lgwv dhvn upab dmqo", // Your email password or an application-specific password
+    user: process.env.EMAIL, // Store this in your .env file
+    pass: process.env.EMAIL_PASSWORD, // Store this in your .env file
   },
 });
 //
@@ -329,8 +406,9 @@ module.exports = {
   getItemById,
   updateItemById,
   deleteItemById,
-  getAllCategories,
+  getFormatedCategories,
   getSearchItems,
   uploadMedia,
   sendEmail,
+  getAllCategories,
 };

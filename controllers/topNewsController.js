@@ -1,5 +1,7 @@
+const TopNews = require("../modules/topNews");
 const topNews = require("../modules/topNews");
-
+const fs = require("fs");
+const path = require("path");
 //START photo handeling
 
 const multer = require("multer");
@@ -91,15 +93,75 @@ const postTopNews = async (req, res) => {
 
 const updateTopNews = async (req, res) => {
   try {
+    // Extract the item ID from request parameters
     const itemId = req.params.id;
+
+    // Find the current item to get the old photo and video filenames
+    const currentItem = await topNews.findById(itemId);
+    if (!currentItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    // Extract and handle the update data
     const updatedItemData = req.body;
 
+    // Handle file uploads if they exist
+    if (req.files) {
+      const newPhotoFilename = req.files.photo
+        ? req.files.photo[0].originalname
+        : undefined;
+      const newVideoFilename = req.files.video
+        ? req.files.video[0].originalname
+        : undefined;
+
+      // Handle new photo upload
+      if (newPhotoFilename) {
+        // Delete the old photo if it exists
+        const oldPhotoFilename = currentItem.photo;
+        if (oldPhotoFilename) {
+          const oldPhotoPath = path.join(
+            __dirname,
+            "..",
+            "public",
+            "img",
+            "news",
+            oldPhotoFilename
+          );
+          if (fs.existsSync(oldPhotoPath)) {
+            fs.unlinkSync(oldPhotoPath);
+          }
+        }
+        // Add the new photo filename to the update data
+        updatedItemData.photo = newPhotoFilename;
+      }
+
+      // Handle new video upload
+      if (newVideoFilename) {
+        // Delete the old video if it exists
+        const oldVideoFilename = currentItem.video;
+        if (oldVideoFilename) {
+          const oldVideoPath = path.join(
+            __dirname,
+            "..",
+            "public",
+            "video",
+            oldVideoFilename
+          );
+          if (fs.existsSync(oldVideoPath)) {
+            fs.unlinkSync(oldVideoPath);
+          }
+        }
+        // Add the new video filename to the update data
+        updatedItemData.video = newVideoFilename;
+      }
+    }
     // Find the item by ID and update it
     const updatedItem = await topNews.findByIdAndUpdate(
       itemId,
       updatedItemData,
       {
         new: true,
+        runValidators: true,
       }
     );
 
