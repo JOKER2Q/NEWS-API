@@ -85,7 +85,7 @@ const upload = multer({
 
 // Export the multer upload middleware
 const uploadMedia = upload.fields([
-  { name: "photo", maxCount: 1 }, // For images
+  { name: "photo", maxCount: 3 }, // For images
   { name: "video", maxCount: 1 }, // For videos
 ]);
 
@@ -173,12 +173,18 @@ const getAllItems = async (req, res) => {
 
 // Controller function to handle creating a new item
 const postItem = async (req, res) => {
+ 
+  const itemData = { ...req.body };
   if (req.files) {
-    req.body.photo = req.files.photo[0].originalname;
-    req.body.video = req.files.video[0].originalname;
+    // Check if `photos` field is an array and handle it
+    if (req.files.photo && Array.isArray(req.files.photo)) {
+      itemData.photo = req.files.photo.map((file) => file.originalname);
+    }
+
+    itemData.video = req.files.video[0].originalname;
   }
   try {
-    const newItem = await NewsCard.create(req.body);
+    const newItem = await NewsCard.create(itemData);
 
     // Replace with actual logic to save item
     // const item = await Item.create(newItem);
@@ -323,6 +329,7 @@ const deleteItemById = async (req, res) => {
 const getSearchItems = async (req, res) => {
   // Query the database
   const searchText = req.params.search;
+
   const results = await NewsCard.find(
     { $text: { $search: searchText } },
 
@@ -365,7 +372,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (req, res) => {
   try {
     // Destructure and validate required fields
-    const { from, subject, text } = req.body;
+    const { name, from, subject, text } = req.body;
 
     if (!from || !subject || !text) {
       return res
@@ -382,7 +389,7 @@ const sendEmail = async (req, res) => {
       from: from, // Dynamic 'from' address from request body
       to: to, // Fixed 'to' address
       subject: subject,
-      text: `from : ${from} \n ${text} `,
+      text: `Name : ${name} \n Subject : ${subject} \n from : ${from} \n ${text} `,
     };
 
     // Send email using async/await

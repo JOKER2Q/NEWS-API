@@ -14,11 +14,13 @@ const newsCardSchema = new Schema({
     required: true,
     trim: true,
   },
-  photo: {
-    type: String,
+  photo: [
+    {
+      type: String,
 
-    trim: true,
-  },
+      trim: true,
+    },
+  ],
   publishedAt: {
     type: Date,
     default: Date.now, // Adjusted to use Date.now reference

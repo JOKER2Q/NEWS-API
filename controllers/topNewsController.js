@@ -1,4 +1,3 @@
-const TopNews = require("../modules/topNews");
 const topNews = require("../modules/topNews");
 const fs = require("fs");
 const path = require("path");
@@ -51,7 +50,7 @@ const upload = multer({
 
 // Export the multer upload middleware
 const uploadMedia = upload.fields([
-  { name: "photo", maxCount: 1 }, // For images
+  { name: "photo", maxCount: 3 }, // For images
   { name: "video", maxCount: 1 }, // For videos
 ]);
 
@@ -71,13 +70,19 @@ const getTopNews = async (req, res) => {
 };
 
 const postTopNews = async (req, res) => {
-  if (req.files) {
-    req.body.photo = req.files.photo[0].originalname;
-    req.body.video = req.files.video[0].originalname;
-  }
+  const itemData = { ...req.body };
+  console.log(req.files);
 
+  if (req.files) {
+    // Check if `photos` field is an array and handle it
+    if (req.files.photo && Array.isArray(req.files.photo)) {
+      itemData.photo = req.files.photo.map((file) => file.originalname);
+    }
+
+    itemData.video = req.files.video[0].originalname;
+  }
   try {
-    const newItem = await topNews.create(req.body);
+    const newItem = await topNews.create(itemData);
 
     // Replace with actual logic to save item
     // const item = await Item.create(newItem);
@@ -107,6 +112,8 @@ const updateTopNews = async (req, res) => {
 
     // Handle file uploads if they exist
     if (req.files) {
+      console.log(req.files);
+
       const newPhotoFilename = req.files.photo
         ? req.files.photo[0].originalname
         : undefined;
@@ -115,9 +122,10 @@ const updateTopNews = async (req, res) => {
         : undefined;
 
       // Handle new photo upload
+      console.log(1);
       if (newPhotoFilename) {
         // Delete the old photo if it exists
-        const oldPhotoFilename = currentItem.photo;
+        const oldPhotoFilename = currentItem.photo[0];
         if (oldPhotoFilename) {
           const oldPhotoPath = path.join(
             __dirname,

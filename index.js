@@ -5,16 +5,18 @@ const app = express();
 const port = process.env.PORT || 3000;
 const connection = require("./db");
 const bodyParser = require("body-parser");
-const NewsCard = require("./modules/news");
 const newsRouter = require("./routes/newsRouter");
 const topNewsRouter = require("./routes/topNewsRouter");
 const morgan = require("morgan");
 const path = require("path");
+const cors = require("cors");
+//end Libraries
+//MIDDLEWARES
+app.use(cors()); // This allows all origins
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(morgan("tiny"));
-//end Libraries
-//MIDDLEWARES
 app.use(bodyParser.json()); // Parse JSON bodies
 //end MIDDLEWARE
 connection(); //DB connection
