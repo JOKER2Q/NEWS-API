@@ -112,58 +112,62 @@ const updateTopNews = async (req, res) => {
 
     // Handle file uploads if they exist
     if (req.files) {
-      console.log(req.files);
 
-      const newPhotoFilename = req.files.photo
-        ? req.files.photo[0].originalname
-        : undefined;
+      // Extract new photo filenames from the uploaded files
+      const newPhotoFilenames = req.files.photo
+        ? req.files.photo.map((file) => file.originalname)
+        : [];
+
+      // Handle new video upload
       const newVideoFilename = req.files.video
         ? req.files.video[0].originalname
         : undefined;
 
-      // Handle new photo upload
-      console.log(1);
-      if (newPhotoFilename) {
-        // Delete the old photo if it exists
-        const oldPhotoFilename = currentItem.photo[0];
-        if (oldPhotoFilename) {
+      // Handle old photo deletions
+      const oldPhotos = currentItem.photo || [];
+      oldPhotos.forEach((filename) => {
+        if (!newPhotoFilenames.includes(filename)) {
           const oldPhotoPath = path.join(
             __dirname,
             "..",
             "public",
             "img",
             "news",
-            oldPhotoFilename
+            filename
           );
           if (fs.existsSync(oldPhotoPath)) {
             fs.unlinkSync(oldPhotoPath);
           }
         }
-        // Add the new photo filename to the update data
-        updatedItemData.photo = newPhotoFilename;
+      });
+
+      // Update the `photo` field with new filenames
+      updatedItemData.photo = newPhotoFilenames;
+
+      // Handle old video deletions
+      const oldVideoFilename = currentItem.video;
+      if (oldVideoFilename && oldVideoFilename !== newVideoFilename) {
+        const oldVideoPath = path.join(
+          __dirname,
+          "..",
+          "public",
+          "video",
+          oldVideoFilename
+        );
+        if (fs.existsSync(oldVideoPath)) {
+          fs.unlinkSync(oldVideoPath);
+        }
       }
 
-      // Handle new video upload
-      if (newVideoFilename) {
-        // Delete the old video if it exists
-        const oldVideoFilename = currentItem.video;
-        if (oldVideoFilename) {
-          const oldVideoPath = path.join(
-            __dirname,
-            "..",
-            "public",
-            "video",
-            oldVideoFilename
-          );
-          if (fs.existsSync(oldVideoPath)) {
-            fs.unlinkSync(oldVideoPath);
-          }
-        }
-        // Add the new video filename to the update data
-        updatedItemData.video = newVideoFilename;
-      }
+      // Update the `video` field with the new filename
+      updatedItemData.video = newVideoFilename;
+    } else {
+      // No files provided, keep old photo and video
+      updatedItemData.photo = currentItem.photo;
+      updatedItemData.video = currentItem.video;
     }
-    // Find the item by ID and update it
+
+    // Update the item in the database
     const updatedItem = await topNews.findByIdAndUpdate(
       itemId,
       updatedItemData,
@@ -173,12 +177,17 @@ const updateTopNews = async (req, res) => {
       }
     );
 
-    // Replace with actual logic to update item
-    // const item = await Item.findByIdAndUpdate(itemId, updatedItem, { new: true });
-    res
-      .status(200)
-      .json({ message: `Item with id ${itemId} updated`, item: updatedItem });
+    if (!updatedItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    // Respond with the updated item
+    res.status(200).json({
+      message: `Item with id ${itemId} updated`,
+      item: updatedItem,
+    });
   } catch (err) {
+    // Handle any errors
     res.status(500).json({
       status: "failure",
       message: "Error updating item",
