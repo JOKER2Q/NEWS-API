@@ -106,6 +106,8 @@ const getAllCategories = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
+
+
 const getFormatedCategories = async (req, res) => {
   try {
     // Aggregate news items by category

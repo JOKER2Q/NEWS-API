@@ -1,6 +1,7 @@
 const topNews = require("../modules/topNews");
 const fs = require("fs");
 const path = require("path");
+const apiFeatures = require("../utils/apiFeatures");
 //START photo handeling
 
 const multer = require("multer");
@@ -57,11 +58,16 @@ const uploadMedia = upload.fields([
 //END photo handeling
 const getTopNews = async (req, res) => {
   try {
-    const topNewsItems = await topNews.find().sort({ position: 1 }).limit(5);
+    const features = new apiFeatures(topNews.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    const news = await features.query;
     res.status(200).json({
       message: "success",
-      numberOfNews: topNewsItems.length,
-      data: topNewsItems,
+      numberOfNews: news.length,
+      data: news,
     });
   } catch (error) {
     console.error("Error retrieving top news:", error);
