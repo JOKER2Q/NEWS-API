@@ -11,6 +11,7 @@ const path = require("path");
 const fs = require("fs");
 
 const nodemailer = require("nodemailer");
+const TopNews = require("../modules/topNews");
 // const imageError = () => {
 //   throw new Error("no image found");
 // };
@@ -208,14 +209,35 @@ const postItem = async (req, res) => {
 
 const getItemById = async (req, res) => {
   try {
-    const item = await NewsCard.findById(req.params.id);
+    // First, try to find the item in NewsCard
+    let item = await NewsCard.findById(req.params.id);
+
+    // If not found in NewsCard, try to find it in TopNews
     if (!item) {
-      return res.status(404).json({ message: "Item not found" });
+      item = await TopNews.findById(req.params.id);
+
+      // If not found in either, return 404
+      if (!item) {
+        return res.status(404).json({
+          status: "failure",
+          message: `Item with id ${req.params.id} not found`,
+        });
+      }
+
+      // If found in TopNews, return 200 with topItem
+      return res.status(200).json({
+        message: `Fetching item with id ${req.params.id} from TopNews`,
+        item,
+      });
     }
-    res
-      .status(200)
-      .json({ message: `Fetching item with id ${req.params.id}`, item });
+
+    // If found in NewsCard, return 200 with item
+    res.status(200).json({
+      message: `Fetching item with id ${req.params.id} from NewsCard`,
+      item,
+    });
   } catch (err) {
+    // Return 500 on server error
     res.status(500).json({
       status: "failure",
       message: "Error fetching item",

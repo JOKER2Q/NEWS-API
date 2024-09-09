@@ -13,6 +13,7 @@ router
 
 router
   .route("/:id")
+  .get(topNewsController.getANews)
   .patch(
     authenticateToken,
     topNewsController.uploadMedia,

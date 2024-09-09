@@ -69,6 +69,24 @@ const getTopNews = async (req, res) => {
   }
 };
 
+const getANews = async (req, res) => {
+  try {
+    const item = await topNews.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+    res
+      .status(200)
+      .json({ message: `Fetching item with id ${req.params.id}`, item });
+  } catch (err) {
+    res.status(500).json({
+      status: "failure",
+      message: "Error fetching item",
+      error: err.message,
+    });
+  }
+};
+
 const postTopNews = async (req, res) => {
   const itemData = { ...req.body };
   const position = req.body.position;
@@ -253,4 +271,5 @@ module.exports = {
   updateTopNews,
   deleteTopNews,
   uploadMedia,
+  getANews,
 };
