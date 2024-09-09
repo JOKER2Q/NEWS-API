@@ -71,15 +71,30 @@ const getTopNews = async (req, res) => {
 
 const postTopNews = async (req, res) => {
   const itemData = { ...req.body };
-  console.log(req.files);
+  const position = req.body.position;
+  // Check if there's already an item with the given position
+  const existingItem = await topNews.findOne({ position });
+  if (existingItem) {
+    const nextInLine = await topNews
+      .find({
+        position: { $gte: position },
+      })
+      .sort({ position: -1 }); // Sort in descending order
+
+    // Update positions of items to make space for the new item
+    for (const item of nextInLine) {
+      await topNews.findByIdAndUpdate(item._id, { $inc: { position: 1 } });
+    }
+  }
 
   if (req.files) {
     // Check if `photos` field is an array and handle it
     if (req.files.photo && Array.isArray(req.files.photo)) {
       itemData.photo = req.files.photo.map((file) => file.originalname);
     }
-
-    itemData.video = req.files.video[0].originalname;
+    if (req.files.video) {
+      itemData.video = req.files.video[0].originalname;
+    }
   }
   try {
     const newItem = await topNews.create(itemData);
@@ -98,8 +113,25 @@ const postTopNews = async (req, res) => {
 
 const updateTopNews = async (req, res) => {
   try {
+    const position = req.body.position;
+    // Check if there's already an item with the given position
+    const existingItem = await topNews.findOne({ position });
+    if (existingItem) {
+      const nextInLine = await topNews
+        .find({
+          position: { $gte: position },
+        })
+        .sort({ position: -1 }); // Sort in descending order
+
+      // Update positions of items to make space for the new item
+      for (const item of nextInLine) {
+        await topNews.findByIdAndUpdate(item._id, { $inc: { position: 1 } });
+      }
+    }
+
     // Extract the item ID from request parameters
     const itemId = req.params.id;
+    const oldSources = req.body.oldPhotoPaths || [];
 
     // Find the current item to get the old photo and video filenames
     const currentItem = await topNews.findById(itemId);
@@ -110,23 +142,21 @@ const updateTopNews = async (req, res) => {
     // Extract and handle the update data
     const updatedItemData = req.body;
 
-    // Handle file uploads if they exist
-    if (req.files) {
+    // Handle photo updates
+    if (req.files && req.files.photo) {
+      // Extract filenames from uploaded photos
+      const newPhotoFilenames = req.files.photo.map(
+        (file) => file.originalname
+      );
 
-      // Extract new photo filenames from the uploaded files
-      const newPhotoFilenames = req.files.photo
-        ? req.files.photo.map((file) => file.originalname)
-        : [];
-
-      // Handle new video upload
-      const newVideoFilename = req.files.video
-        ? req.files.video[0].originalname
-        : undefined;
-
-      // Handle old photo deletions
+      // Delete old photos that are not in the new list
       const oldPhotos = currentItem.photo || [];
       oldPhotos.forEach((filename) => {
-        if (!newPhotoFilenames.includes(filename)) {
+        // Check if the old photo is not in the new list and also not in oldSources
+        if (
+          !newPhotoFilenames.includes(filename) &&
+          !oldSources.includes(filename)
+        ) {
           const oldPhotoPath = path.join(
             __dirname,
             "..",
@@ -141,10 +171,18 @@ const updateTopNews = async (req, res) => {
         }
       });
 
-      // Update the `photo` field with new filenames
-      updatedItemData.photo = newPhotoFilenames;
+      // Update the `photo` field with new filenames and old sources
+      updatedItemData.photo = [...newPhotoFilenames, ...oldSources];
+    } else {
+      // No new photos provided, keep old ones
+      updatedItemData.photo = currentItem.photo;
+    }
 
-      // Handle old video deletions
+    // Handle video update if a new file is provided
+    if (req.files && req.files.video) {
+      const newVideoFilename = req.files.video[0].originalname;
+
+      // Delete old video if it exists and is different from the new one
       const oldVideoFilename = currentItem.video;
       if (oldVideoFilename && oldVideoFilename !== newVideoFilename) {
         const oldVideoPath = path.join(
@@ -162,8 +200,7 @@ const updateTopNews = async (req, res) => {
       // Update the `video` field with the new filename
       updatedItemData.video = newVideoFilename;
     } else {
-      // No files provided, keep old photo and video
-      updatedItemData.photo = currentItem.photo;
+      // No new video provided, keep old one
       updatedItemData.video = currentItem.video;
     }
 
@@ -171,10 +208,7 @@ const updateTopNews = async (req, res) => {
     const updatedItem = await topNews.findByIdAndUpdate(
       itemId,
       updatedItemData,
-      {
-        new: true,
-        runValidators: true,
-      }
+      { new: true, runValidators: true }
     );
 
     if (!updatedItem) {
