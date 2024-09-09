@@ -107,7 +107,6 @@ const getAllCategories = async (req, res) => {
   }
 };
 
-
 const getFormatedCategories = async (req, res) => {
   try {
     // Aggregate news items by category
