@@ -10,6 +10,7 @@ const topNewsRouter = require("./routes/topNewsRouter");
 const morgan = require("morgan");
 const path = require("path");
 const cors = require("cors");
+const userRouter = require("./routes/userRouter");
 //end Libraries
 //MIDDLEWARES
 app.use(cors()); // This allows all origins
@@ -23,6 +24,7 @@ connection(); //DB connection
 //MOUNTING
 app.use("/api/top-news", topNewsRouter);
 app.use("/api/news", newsRouter);
+app.use("/api/users", userRouter);
 //end of MOUNTING process
 //SERVER START
 app.listen(port, () => {
