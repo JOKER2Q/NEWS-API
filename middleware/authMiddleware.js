@@ -1,20 +1,42 @@
 // middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
-const secret = process.env.JWT_SECRET || "your_jwt_secret"; // Secret key for JWT
+const User = require("../modules/users"); // Adjust path as needed
+const bcrypt = require("bcrypt");
 
-function authenticateToken(req, res, next) {
-    
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // Extract token from "Bearer TOKEN"
+// Middleware to authenticate the user based on token
+const authenticateToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(" ")[1]; // Assuming Bearer token
 
+  if (!token) return res.sendStatus(401); // No token provided
 
-  if (token == null) return res.sendStatus(401); // If no token, respond with 401
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, user) => {
+    if (err) return res.sendStatus(403); // Invalid token
 
-  jwt.verify(token, secret, (err, user) => {
-    if (err) return res.sendStatus(403); // If token is invalid, respond with 403
-    req.user = user; // Attach user info to request
-    next(); // Proceed to next middleware or route handler
+    const foundUser = await User.findById(user.id);
+    if (!foundUser) return res.sendStatus(404); // User not found
+
+    req.user = foundUser; // Attach user to request object
+    next();
   });
-}
+};
 
-module.exports = authenticateToken;
+// Middleware to check if user is an admin
+const isAdmin = (req, res, next) => {
+  if (req.user && req.user.roles.includes("admin")) {
+    return next();
+  }
+  res.status(403).json({ message: "Access denied." });
+};
+
+// Middleware to check if user is a regular user
+const isUser = (req, res, next) => {
+  console.log(req.user);
+
+  if (req.user && (req.user.roles.includes("user") ||req.user.roles.includes("admin")  )) {
+    return next();
+  }
+  res.status(403).json({ message: "Access denied." });
+};
+
+module.exports = { authenticateToken, isAdmin, isUser };

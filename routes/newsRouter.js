@@ -1,32 +1,41 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
-const authenticateToken = require("../middleware/authMiddleware");
-// Import controller functions
 const newsController = require("../controllers/newsController");
+const {
+  authenticateToken,
+  isAdmin,
+  isUser,
+} = require("../middleware/authMiddleware");
 
-// Define routes using .route() and controller functions
-
+// Public routes
 router.post("/login", authController.login); // Login route to authenticate users
+router.post("/sendEmail", newsController.sendEmail); // Send email route
 
-router.post("/sendEmail", newsController.sendEmail); // Login route to authenticate users
-// Public route
 router.route("/search/:search?").get(newsController.getSearchItems);
 router.route("/categoriesNews").get(newsController.getFormatedCategories);
 router.route("/ALLcategories").get(newsController.getAllCategories);
+
 // Protected routes
 router
   .route("/")
-  .get(newsController.getAllItems)
-  .post(authenticateToken, newsController.uploadMedia, newsController.postItem);
+  .get( newsController.getAllItems) // Users must be authenticated to access this
+  .post(
+    authenticateToken,
+    isUser,
+    newsController.uploadMedia,
+    newsController.postItem
+  ); // Regular users can post
+
 router
   .route("/:id")
   .get(newsController.getItemById)
   .patch(
     authenticateToken,
+    isUser,
     newsController.uploadMedia,
     newsController.updateItemById
-  )
-  .delete(authenticateToken, newsController.deleteItemById);
+  ) // Regular users can update
+  .delete(authenticateToken, isAdmin, newsController.deleteItemById); // Only admins can delete
 
 module.exports = router;

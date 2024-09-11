@@ -1,8 +1,14 @@
 const User = require("../modules/users"); // Assuming you have this model
+const bcrypt = require("bcrypt");
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
+    // Assuming that only admins should get the list of all users
+    if (!req.user || !req.user.roles.includes("admin")) {
+      return res.status(403).json({ message: "Access denied. Admins only." });
+    }
+
     const users = await User.find();
     res.status(200).json(users);
   } catch (error) {
@@ -13,35 +19,64 @@ exports.getAllUsers = async (req, res) => {
 // Create a new user
 exports.createUser = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const newUser = new User({ username, password });
+    const { username, password, roles } = req.body;
+
+    // Check if the user already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user with roles
+    const newUser = new User({
+      username,
+      password: hashedPassword,
+      roles: roles || ["user"], // Default to 'user' role if no roles provided
+    });
+
     await newUser.save();
     res.status(201).json(newUser);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
-};
-
-// Get a specific user by ID
+}; // Get a specific user by ID
 exports.getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json(user);
+
+    // Admins can get any user's details, regular users can get their own details
+    if (
+      req.user.roles.includes("admin") ||
+      req.user._id.toString() === user._id.toString()
+    ) {
+      res.status(200).json(user);
+    } else {
+      res.status(403).json({
+        message: "Access denied. You can only view your own details.",
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 // Update a specific user by ID
 exports.updateUserById = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    // Admins can update any user's details
+    if (!req.user || !req.user.roles.includes("admin")) {
+      return res.status(403).json({ message: "Access denied. Admins only." });
+    }
+
+    const { username, password, roles } = req.body;
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
-      { username, password },
+      { username, password, roles },
       { new: true, runValidators: true }
     );
     if (!updatedUser) {
@@ -52,10 +87,11 @@ exports.updateUserById = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
 // Delete a specific user by ID
 exports.deleteUserById = async (req, res) => {
   try {
+    // Admins can delete any user
+
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });

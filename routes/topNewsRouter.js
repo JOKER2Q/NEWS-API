@@ -1,12 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const topNewsController = require("../controllers/topNewsController");
-const authenticateToken = require("../middleware/authMiddleware");
+const {
+  authenticateToken,
+  isAdmin,
+  isUser,
+} = require("../middleware/authMiddleware");
 router
   .route("/")
   .get(topNewsController.getTopNews)
   .post(
     authenticateToken,
+    isUser,
     topNewsController.uploadMedia,
     topNewsController.postTopNews
   );
@@ -16,9 +21,10 @@ router
   .get(topNewsController.getANews)
   .patch(
     authenticateToken,
+    isUser,
     topNewsController.uploadMedia,
     topNewsController.updateTopNews
   )
-  .delete(authenticateToken, topNewsController.deleteTopNews);
+  .delete(authenticateToken, isUser, topNewsController.deleteTopNews);
 
 module.exports = router;

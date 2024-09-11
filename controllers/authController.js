@@ -1,34 +1,35 @@
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../modules/users"); // Adjust the path to your User model
-const secret = process.env.JWT_SECRET || "your_jwt_secret"; // Secret key for JWT
+const User = require("../modules/users"); // Replace with your User model
 
-module.exports.login = async (req, res) => {
+// Replace with your JWT secret key
+const JWT_SECRET = process.env.ACCESS_TOKEN_SECRET || "your_jwt_secret_key";
+
+const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Find the user by username
+    // Find user by email
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Compare the provided password with the hashed password
-    const isMatch = await user.comparePassword(password);
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Generate JWT token with 3 days expiration
-    const accessToken = jwt.sign(
-      { id: user._id, username: user.username },
-      secret,
-      { expiresIn: "3d" } // Token expires in 3 days
-    );
+    // Generate JWT token
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
 
-    // Send the token in the response
-    res.json({ accessToken });
+    // Respond with token
+    res.status(200).json({ token });
   } catch (error) {
-    console.error("Error during login:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Server error" });
   }
 };
+
+module.exports = { login };
