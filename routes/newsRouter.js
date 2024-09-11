@@ -19,7 +19,7 @@ router.route("/ALLcategories").get(newsController.getAllCategories);
 // Protected routes
 router
   .route("/")
-  .get( newsController.getAllItems) // Users must be authenticated to access this
+  .get(newsController.getAllItems) // Users must be authenticated to access this
   .post(
     authenticateToken,
     isUser,

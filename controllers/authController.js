@@ -11,6 +11,7 @@ const login = async (req, res) => {
   try {
     // Find user by email
     const user = await User.findOne({ username });
+    
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -26,7 +27,10 @@ const login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
 
     // Respond with token
-    res.status(200).json({ token });
+    res.status(200).json({ token,
+      userRole:user.roles
+     });
+
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
