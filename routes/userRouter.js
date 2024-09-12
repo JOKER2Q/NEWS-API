@@ -9,6 +9,7 @@ const {
 
 // Route to get all users
 // You might want to protect this route with `isAdmin` depending on your use case
+router.route('/profile').get(authenticateToken , userController.userProfile )
 router.route("/").get(authenticateToken, isAdmin, userController.getAllUsers);
 
 // Route to create a new user

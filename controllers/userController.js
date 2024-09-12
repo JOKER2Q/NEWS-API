@@ -1,5 +1,13 @@
 const User = require("../modules/users"); // Assuming you have this model
 const bcrypt = require("bcrypt");
+//user profile
+exports.userProfile = (req, res) => {
+  try {
+    res.status(200).json({ user: req.user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
