@@ -31,7 +31,6 @@ const isAdmin = (req, res, next) => {
 
 // Middleware to check if user is a regular user
 const isUser = (req, res, next) => {
-  console.log(req.user);
 
   if (req.user && (req.user.roles.includes("user") ||req.user.roles.includes("admin")  )) {
     return next();

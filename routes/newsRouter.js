@@ -36,6 +36,6 @@ router
     newsController.uploadMedia,
     newsController.updateItemById
   ) // Regular users can update
-  .delete(authenticateToken, isAdmin, newsController.deleteItemById); // Only admins can delete
+  .delete(authenticateToken, isUser, newsController.deleteItemById); // Only admins can delete
 
 module.exports = router;

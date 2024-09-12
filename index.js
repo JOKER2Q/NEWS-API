@@ -11,6 +11,7 @@ const morgan = require("morgan");
 const path = require("path");
 const cors = require("cors");
 const userRouter = require("./routes/userRouter");
+const activityRouter = require("./routes/activityRouter");
 //end Libraries
 //MIDDLEWARES
 app.use(cors()); // This allows all origins
@@ -23,6 +24,7 @@ app.use(bodyParser.json()); // Parse JSON bodies
 connection(); //DB connection
 //MOUNTING
 app.use("/api/top-news", topNewsRouter);
+app.use("/api/activity", activityRouter);
 app.use("/api/news", newsRouter);
 app.use("/api/users", userRouter);
 //end of MOUNTING process

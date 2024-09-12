@@ -9,6 +9,7 @@ const NewsCard = require("../modules/news");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const logActivity = require("../middleware/activityLogger");
 
 const nodemailer = require("nodemailer");
 const TopNews = require("../modules/topNews");
@@ -193,7 +194,13 @@ const postItem = async (req, res) => {
   }
   try {
     const newItem = await NewsCard.create(itemData);
-
+    // Log the activity
+    await logActivity(
+      req.user._id,
+      "CREATE",
+      newItem._id,
+      "Created a new news item"
+    );
     // Replace with actual logic to save item
     // const item = await Item.create(newItem);
     res.status(201).json({ message: "Item created", item: newItem });
@@ -337,6 +344,8 @@ const updateItemById = async (req, res) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
+    // Log the activity
+    await logActivity(req.user._id, "UPDATE", itemId, "Updated a news item");
     // Respond with the updated item
     res.status(200).json({
       message: `Item with id ${itemId} updated`,
@@ -357,7 +366,14 @@ const deleteItemById = async (req, res) => {
     const itemId = await NewsCard.findByIdAndDelete(req.params.id);
     // Replace with actual logic to delete item
     // await Item.findByIdAndDelete(itemId);
-    res.status(200).json({ message: `Item with id ${itemId} deleted` });
+    // Log the activity
+    await logActivity(
+      req.user._id,
+      "DELETE",
+      itemId._id,
+      "Deleted a news item"
+    );
+    res.status(200).json({ message: `Item with id ${itemId._id} deleted` });
   } catch (err) {
     res.status(500).json({
       status: "failure",

@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const apiFeatures = require("../utils/apiFeatures");
 //START photo handeling
+const logActivity = require("../middleware/activityLogger");
 
 const multer = require("multer");
 
@@ -122,7 +123,13 @@ const postTopNews = async (req, res) => {
   }
   try {
     const newItem = await topNews.create(itemData);
-
+    // Log the activity
+    await logActivity(
+      req.user._id,
+      "CREATE",
+      newItem._id,
+      "Created a new top news item"
+    );
     // Replace with actual logic to save item
     // const item = await Item.create(newItem);
     res.status(201).json({ message: "Item created", item: newItem });
@@ -238,7 +245,8 @@ const updateTopNews = async (req, res) => {
     if (!updatedItem) {
       return res.status(404).json({ message: "Item not found" });
     }
-
+    // Log the activity
+    await logActivity(req.user._id, "UPDATE", itemId, "Updated top news item");
     // Respond with the updated item
     res.status(200).json({
       message: `Item with id ${itemId} updated`,
@@ -263,7 +271,8 @@ const deleteTopNews = async (req, res) => {
     if (!deletedTopNews) {
       return res.status(404).json({ message: "Top news item not found" });
     }
-
+    // Log the activity
+    await logActivity(req.user._id, "DELETE", id, "Deleted top news item");
     res.status(200).json({ message: "Top news item deleted successfully" });
   } catch (error) {
     console.error("Error deleting top news:", error);
