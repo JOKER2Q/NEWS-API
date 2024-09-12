@@ -13,11 +13,13 @@ const topNewsSchema = new Schema({
     required: true,
     trim: true,
   },
-  photo: [{
-    type: String,
-    required: false,
-    trim: true,
-  }],
+  photo: [
+    {
+      type: String,
+      required: false,
+      trim: true,
+    },
+  ],
   publishedAt: {
     type: Date,
     default: Date.now,
@@ -26,7 +28,6 @@ const topNewsSchema = new Schema({
   source: {
     name: {
       type: String,
-      required: true,
       trim: true,
     },
     logoUrl: {

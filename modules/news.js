@@ -28,7 +28,6 @@ const newsCardSchema = new Schema({
   source: {
     name: {
       type: String,
-      required: true,
       trim: true,
     },
     logoUrl: {
