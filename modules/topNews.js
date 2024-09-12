@@ -43,7 +43,6 @@ const topNewsSchema = new Schema({
   },
   readMoreUrl: {
     type: String,
-    required: true,
     trim: true,
   },
   position: {
