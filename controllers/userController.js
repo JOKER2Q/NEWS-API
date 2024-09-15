@@ -53,7 +53,10 @@ exports.createUser = async (req, res) => {
       req.user._id,
       "CREATE",
       newUser._id,
-      `Created ${newUser.username} as an ${newUser.roles[0] || "user"}`
+      `Created user with the username: ${newUser.username} as an ${
+        newUser.roles[0] || "user"
+      }`,
+      "user"
     );
     res.status(201).json(newUser);
   } catch (error) {
@@ -104,7 +107,8 @@ exports.updateUserById = async (req, res) => {
       req.user._id,
       "UPDATE",
       updatedUser._id,
-      "Updated user details"
+      "Updated user details",
+      "user"
     );
     res.status(200).json(updatedUser);
   } catch (error) {
@@ -125,7 +129,8 @@ exports.deleteUserById = async (req, res) => {
       req.user._id,
       "DELETE",
       user._id,
-      `Deleted ${user.username}`
+      `Deleted ${user.username}`,
+      "user"
     );
 
     res.status(200).json({ message: "User deleted successfully" });

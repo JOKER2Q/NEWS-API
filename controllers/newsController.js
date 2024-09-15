@@ -210,7 +210,8 @@ const postItem = async (req, res) => {
       req.user._id,
       "CREATE",
       newItem._id,
-      `Created ${newItem.headline} `
+      `Created Article with the headline ${newItem.headline} `,
+      "news"
     );
     // Replace with actual logic to save item
     // const item = await Item.create(newItem);
@@ -358,7 +359,8 @@ const updateItemById = async (req, res) => {
       req.user._id,
       "UPDATE",
       itemId,
-      `Updated ${updatedItem.headline}`
+      `Updated Article with the headline ${updatedItem.headline}`,
+      "news"
     );
     // Respond with the updated item
     res.status(200).json({
@@ -386,7 +388,8 @@ const deleteItemById = async (req, res) => {
       req.user._id,
       "DELETE",
       itemId._id,
-      `Deleted  ${itemId.headline}`
+      `Deleted Article with the headline ${itemId.headline}`,
+      "news"
     );
     res.status(200).json({ message: `Item with id ${itemId._id} deleted` });
   } catch (err) {

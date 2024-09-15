@@ -25,6 +25,11 @@ const activityLogSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  type: {
+    type: String,
+    enum: ["news", "user"],
+    required: true,
+  },
 });
 
 const ActivityLog = mongoose.model("ActivityLog", activityLogSchema);

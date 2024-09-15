@@ -139,7 +139,8 @@ const postTopNews = async (req, res) => {
       req.user._id,
       "CREATE",
       newItem._id,
-      `Created ${newItem.headline}`
+      `Created Article with the headline ${newItem.headline}`,
+      "news"
     );
     // Replace with actual logic to save item
     // const item = await Item.create(newItem);
@@ -259,7 +260,8 @@ const updateTopNews = async (req, res) => {
       req.user._id,
       "UPDATE",
       itemId,
-      `Updated ${updatedItem.headline}`
+      `Updated Article with the headline ${updatedItem.headline}`,
+      "news"
     );
     // Respond with the updated item
     res.status(200).json({
@@ -290,7 +292,8 @@ const deleteTopNews = async (req, res) => {
       req.user._id,
       "DELETE",
       id,
-      `Deleted ${deletedTopNews.headline}`
+      `Deleted Article with the headline ${deletedTopNews.headline}`,
+      "news"
     );
     res.status(200).json({ message: "Top news item deleted successfully" });
   } catch (error) {
