@@ -62,8 +62,19 @@ const multerStorage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    // Generate a unique filename
-    cb(null, `${file.originalname}`);
+    // Get the current timestamp
+    const timestamp = Date.now();
+
+    // Generate a random number between 1000 and 9999
+    const randomNum = Math.floor(Math.random() * 9000) + 1000;
+
+    // Extract the original file extension
+    const originalExt = file.originalname.split(".").pop();
+
+    // Create a new filename with timestamp and random number
+    const newFilename = `${timestamp}-${randomNum}.${originalExt}`;
+
+    cb(null, newFilename);
   },
 });
 
@@ -187,10 +198,10 @@ const postItem = async (req, res) => {
   if (req.files) {
     // Check if `photos` field is an array and handle it
     if (req.files.photo && Array.isArray(req.files.photo)) {
-      itemData.photo = req.files.photo.map((file) => file.originalname);
+      itemData.photo = req.files.photo.map((file) => file.filename);
     }
 
-    itemData.video = req.files.video[0].originalname;
+    itemData.video = req.files.video && req.files.video[0].filename;
   }
   try {
     const newItem = await NewsCard.create(itemData);
@@ -274,9 +285,7 @@ const updateItemById = async (req, res) => {
     // Handle photo updates
     if (req.files && req.files.photo) {
       // Extract filenames from uploaded photos
-      const newPhotoFilenames = req.files.photo.map(
-        (file) => file.originalname
-      );
+      const newPhotoFilenames = req.files.photo.map((file) => file.filename);
 
       // Delete old photos that are not in the new list
       const oldPhotos = currentItem.photo || [];
@@ -309,7 +318,7 @@ const updateItemById = async (req, res) => {
 
     // Handle video update if a new file is provided
     if (req.files && req.files.video) {
-      const newVideoFilename = req.files.video[0].originalname;
+      const newVideoFilename = req.files.video[0].filename;
 
       // Delete old video if it exists and is different from the new one
       const oldVideoFilename = currentItem.video;
