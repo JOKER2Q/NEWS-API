@@ -376,11 +376,12 @@ const deleteItemById = async (req, res) => {
     // Replace with actual logic to delete item
     // await Item.findByIdAndDelete(itemId);
     // Log the activity
+
     await logActivity(
       req.user._id,
       "DELETE",
       itemId._id,
-      "Deleted a news item"
+      `Deleted  ${itemId.headline}`
     );
     res.status(200).json({ message: `Item with id ${itemId._id} deleted` });
   } catch (err) {
