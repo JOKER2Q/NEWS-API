@@ -210,7 +210,7 @@ const postItem = async (req, res) => {
       req.user._id,
       "CREATE",
       newItem._id,
-      "Created a new news item"
+      `Created ${newItem.headline} `
     );
     // Replace with actual logic to save item
     // const item = await Item.create(newItem);
@@ -354,7 +354,12 @@ const updateItemById = async (req, res) => {
     }
 
     // Log the activity
-    await logActivity(req.user._id, "UPDATE", itemId, "Updated a news item");
+    await logActivity(
+      req.user._id,
+      "UPDATE",
+      itemId,
+      `Updated ${updatedItem.headline}`
+    );
     // Respond with the updated item
     res.status(200).json({
       message: `Item with id ${itemId} updated`,

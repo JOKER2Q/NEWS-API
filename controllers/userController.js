@@ -53,7 +53,7 @@ exports.createUser = async (req, res) => {
       req.user._id,
       "CREATE",
       newUser._id,
-      "Created a new user"
+      `Created ${newUser.username} as an ${newUser.roles[0] || "user"}`
     );
     res.status(201).json(newUser);
   } catch (error) {
@@ -121,7 +121,12 @@ exports.deleteUserById = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     // Log the activity
-    await logActivity(req.user._id, "DELETE", user._id, "Deleted user");
+    await logActivity(
+      req.user._id,
+      "DELETE",
+      user._id,
+      `Deleted ${user.username}`
+    );
 
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
