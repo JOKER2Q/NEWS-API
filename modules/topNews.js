@@ -23,7 +23,7 @@ const topNewsSchema = new Schema({
   publishedAt: {
     type: Date,
     default: Date.now,
-  },
+  },  
   source: {
     name: {
       type: String,

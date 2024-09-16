@@ -273,6 +273,7 @@ const updateItemById = async (req, res) => {
     // Extract the item ID from request parameters
     const itemId = req.params.id;
     const oldSources = req.body.oldPhotoPaths || [];
+    const oldVideo = req.body.oldVideo;
 
     // Find the current item to get the old photo and video filenames
     const currentItem = await NewsCard.findById(itemId);
@@ -284,7 +285,31 @@ const updateItemById = async (req, res) => {
     const updatedItemData = req.body;
 
     // Handle photo updates
-    if (req.files && req.files.photo) {
+    if (oldSources && !req.files.photo) {
+      // Delete old photos that are not in the new list
+      const oldPhotos = currentItem.photo || [];
+
+      oldPhotos.forEach((filename) => {
+        // Check if the old photo is not in the new list and also not in oldSources
+        if (!oldSources.includes(filename)) {
+          console.log(filename);
+
+          const oldPhotoPath = path.join(
+            __dirname,
+            "..",
+            "public",
+            "img",
+            "news",
+            filename
+          );
+
+          if (fs.existsSync(oldPhotoPath)) {
+            fs.unlinkSync(oldPhotoPath, { force: true });
+          }
+        }
+      });
+      updatedItemData.photo = oldSources;
+    } else if (req.files && req.files.photo) {
       // Extract filenames from uploaded photos
       const newPhotoFilenames = req.files.photo.map((file) => file.filename);
 
@@ -304,8 +329,9 @@ const updateItemById = async (req, res) => {
             "news",
             filename
           );
+          console.log(oldPhotoPath);
           if (fs.existsSync(oldPhotoPath)) {
-            fs.unlinkSync(oldPhotoPath);
+            fs.unlinkSync(oldPhotoPath, { force: true });
           }
         }
       });
@@ -318,7 +344,22 @@ const updateItemById = async (req, res) => {
     }
 
     // Handle video update if a new file is provided
-    if (req.files && req.files.video) {
+    if (oldVideo) {
+      const oldVideoFilename = currentItem.video;
+      if (oldVideoFilename) {
+        const oldVideoPath = path.join(
+          __dirname,
+          "..",
+          "public",
+          "video",
+          oldVideoFilename
+        );
+        if (fs.existsSync(oldVideoPath)) {
+          fs.unlinkSync(oldVideoPath, { force: true });
+        }
+      }
+      updatedItemData.video = "no video Available";
+    } else if (req.files && req.files.video) {
       const newVideoFilename = req.files.video[0].filename;
 
       // Delete old video if it exists and is different from the new one
@@ -332,7 +373,7 @@ const updateItemById = async (req, res) => {
           oldVideoFilename
         );
         if (fs.existsSync(oldVideoPath)) {
-          fs.unlinkSync(oldVideoPath);
+          fs.unlinkSync(oldVideoPath, { force: true });
         }
       }
 
