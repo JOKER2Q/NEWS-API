@@ -284,7 +284,6 @@ const updateItemById = async (req, res) => {
     // Extract and handle the update data
     const updatedItemData = req.body;
 
-    // Handle photo updates
     if (oldSources && !req.files.photo) {
       // Delete old photos that are not in the new list
       const oldPhotos = currentItem.photo || [];
@@ -329,15 +328,18 @@ const updateItemById = async (req, res) => {
             "news",
             filename
           );
-          console.log(oldPhotoPath);
-          if (fs.existsSync(oldPhotoPath)) {
-            fs.unlinkSync(oldPhotoPath, { force: true });
+
+          if (filename !== "") {
+            if (fs.existsSync(oldPhotoPath)) {
+              fs.unlinkSync(oldPhotoPath, { force: true });
+            }
           }
         }
       });
 
-      // Update the `photo` field with new filenames and old sources
-      updatedItemData.photo = [...newPhotoFilenames, ...oldSources];
+      console.log(!oldSources);
+      updatedItemData.photo = [...newPhotoFilenames];
+      oldSources.map((e) => e != "" && updatedItemData.photo.push(e));
     } else {
       // No new photos provided, keep old ones
       updatedItemData.photo = currentItem.photo;
@@ -354,6 +356,7 @@ const updateItemById = async (req, res) => {
           "video",
           oldVideoFilename
         );
+
         if (fs.existsSync(oldVideoPath)) {
           fs.unlinkSync(oldVideoPath, { force: true });
         }
@@ -410,6 +413,8 @@ const updateItemById = async (req, res) => {
     });
   } catch (err) {
     // Handle any errors
+    console.log(err);
+
     res.status(500).json({
       status: "failure",
       message: "Error updating item",

@@ -156,6 +156,8 @@ const postTopNews = async (req, res) => {
 
 const updateTopNews = async (req, res) => {
   try {
+    console.log(req.files.photo);
+
     const position = req.body.position;
     // Check if there's already an item with the given position
     const existingItem = await topNews.findOne({ position });
@@ -184,7 +186,7 @@ const updateTopNews = async (req, res) => {
     }
 
     // Extract and handle the update data
-    const updatedItemData = req.body;
+    let updatedItemData = req.body;
     // Handle photo updates
 
     if (oldSources && !req.files.photo) {
@@ -205,8 +207,10 @@ const updateTopNews = async (req, res) => {
             filename
           );
 
-          if (fs.existsSync(oldPhotoPath)) {
-            fs.unlinkSync(oldPhotoPath, { force: true });
+          if (filename !== "") {
+            if (fs.existsSync(oldPhotoPath)) {
+              fs.unlinkSync(oldPhotoPath, { force: true });
+            }
           }
         }
       });
@@ -231,15 +235,19 @@ const updateTopNews = async (req, res) => {
             "news",
             filename
           );
-
-          if (fs.existsSync(oldPhotoPath)) {
-            fs.unlinkSync(oldPhotoPath, { force: true });
+          console.log(oldPhotoPath);
+          if (filename !== "") {
+            if (fs.existsSync(oldPhotoPath)) {
+              fs.unlinkSync(oldPhotoPath, { force: true });
+            }
           }
         }
       });
 
       // Update the `photo` field with new filenames and old sources
-      updatedItemData.photo = [...newPhotoFilenames, ...oldSources];
+      console.log(!oldSources);
+      updatedItemData.photo = [...newPhotoFilenames];
+      oldSources.map((e) => e != "" && updatedItemData.photo.push(e));
     } else {
       // No new photos provided, keep old ones
       updatedItemData.photo = currentItem.photo;
