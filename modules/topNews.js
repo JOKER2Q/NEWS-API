@@ -23,7 +23,7 @@ const topNewsSchema = new Schema({
   publishedAt: {
     type: Date,
     default: Date.now,
-  },  
+  },
   source: {
     name: {
       type: String,
@@ -53,6 +53,11 @@ const topNewsSchema = new Schema({
   video: {
     type: String,
     trim: true,
+  },
+  lang: {
+    type: String,
+    enum: ["arabic", "english", "kurdish"], // You can add more here if needed
+    default: "arabic", // Default lang for news
   },
 });
 

@@ -156,8 +156,6 @@ const postTopNews = async (req, res) => {
 
 const updateTopNews = async (req, res) => {
   try {
-    console.log(req.files.photo);
-
     const position = req.body.position;
     // Check if there's already an item with the given position
     const existingItem = await topNews.findOne({ position });
@@ -196,8 +194,6 @@ const updateTopNews = async (req, res) => {
       oldPhotos.forEach((filename) => {
         // Check if the old photo is not in the new list and also not in oldSources
         if (!oldSources.includes(filename)) {
-          console.log(filename);
-
           const oldPhotoPath = path.join(
             __dirname,
             "..",
@@ -235,7 +231,6 @@ const updateTopNews = async (req, res) => {
             "news",
             filename
           );
-          console.log(oldPhotoPath);
           if (filename !== "") {
             if (fs.existsSync(oldPhotoPath)) {
               fs.unlinkSync(oldPhotoPath, { force: true });
@@ -245,7 +240,6 @@ const updateTopNews = async (req, res) => {
       });
 
       // Update the `photo` field with new filenames and old sources
-      console.log(!oldSources);
       updatedItemData.photo = [...newPhotoFilenames];
       oldSources.map((e) => e != "" && updatedItemData.photo.push(e));
     } else {

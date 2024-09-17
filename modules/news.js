@@ -47,6 +47,7 @@ const newsCardSchema = new Schema({
       trim: true,
     },
   ],
+
   author: {
     name: {
       type: String,
@@ -67,6 +68,11 @@ const newsCardSchema = new Schema({
   video: {
     type: String,
     trim: true,
+  },
+  lang: {
+    type: String,
+    enum: ["arabic", "english", "kurdish"], // You can add more here if needed
+    default: "arabic", // Default lang for news
   },
 });
 newsCardSchema.index({ headline: "text", summary: "text", category: "text" });

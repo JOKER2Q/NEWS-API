@@ -110,19 +110,34 @@ const uploadMedia = upload.fields([
 
 //=----
 const getAllCategories = async (req, res) => {
+  // Extract the language parameter (default to 'arabic' if not provided)
+  const lang = req.query.lang || "arabic";
+
   try {
-    // Fetch all categories from the database
-    const categories = await NewsCard.distinct("category"); // Assuming 'category' is the field name for categories
+    // Fetch all distinct categories from the database, filtering by language
+    const categories = await NewsCard.distinct("category", { lang: lang });
+
+    // Send the response with categories
     res.json(categories);
   } catch (error) {
-    res.status(500).send("Server Error");
+    console.error(error);
+    res.status(500).json({
+      status: "error",
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
-
 const getFormatedCategories = async (req, res) => {
+  // Extract the language parameter (default to 'arabic' if not provided)
+  const lang = req.query.lang || "arabic";
+
   try {
-    // Aggregate news items by category
+    // Aggregate news items by category, filtering by language
     const categories = await NewsCard.aggregate([
+      {
+        $match: { lang: lang }, // Filter by language
+      },
       {
         $group: {
           _id: "$category", // Group by category
@@ -291,8 +306,6 @@ const updateItemById = async (req, res) => {
       oldPhotos.forEach((filename) => {
         // Check if the old photo is not in the new list and also not in oldSources
         if (!oldSources.includes(filename)) {
-          console.log(filename);
-
           const oldPhotoPath = path.join(
             __dirname,
             "..",
@@ -337,7 +350,6 @@ const updateItemById = async (req, res) => {
         }
       });
 
-      console.log(!oldSources);
       updatedItemData.photo = [...newPhotoFilenames];
       oldSources.map((e) => e != "" && updatedItemData.photo.push(e));
     } else {
@@ -446,24 +458,24 @@ const deleteItemById = async (req, res) => {
     });
   }
 };
-//SEARCH ITEMS
 const getSearchItems = async (req, res) => {
-  // Query the database
-  let results;
-  if (req.params.search) {
-    const searchText = req.params.search;
-    results = await NewsCard.find(
-      { $text: { $search: searchText } },
+  // Extract search parameters
+  const searchText = req.params.search || "";
+  const lang = req.query.lang || "arabic"; // Default to 'arabic' if no language is provided
 
+  try {
+    // Query the database with text search and language filter
+    let results = await NewsCard.find(
+      {
+        $text: { $search: searchText },
+        lang: lang, // Add language filter to the query
+      },
       {
         score: { $meta: "textScore" },
       }
     ).sort({ score: { $meta: "textScore" } });
-  }
-  // Count the total number of matching items (for pagination purposes)
 
-  // Return the results
-  try {
+    // Return the results
     res.status(200).json({
       status: "success",
       results: results.length,
@@ -476,6 +488,7 @@ const getSearchItems = async (req, res) => {
     });
   }
 };
+
 //SEND EMAIL
 
 //transporter
